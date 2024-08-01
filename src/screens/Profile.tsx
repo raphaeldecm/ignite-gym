@@ -2,37 +2,59 @@ import { Button } from "@components/Button";
 import { Input } from "@components/Input";
 import { ScreenHeader } from "@components/ScreenHeader";
 import { UserPhoto } from "@components/UserPhoto";
-import { Center, Heading, Text, VStack } from "@gluestack-ui/themed";
+import { Center, Heading, Text, VStack, useToast } from "@gluestack-ui/themed";
 import { ScrollView, TouchableOpacity } from "react-native";
 
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 
 import { useState } from "react";
+import { ToastMessage } from "@components/ToastMessage";
 
 export function Profile() {
   const [userPhoto, setUserPhoto] = useState(
     "https://github.com/raphaeldecm.png"
   );
 
+  const toast = useToast();
+
   async function handleSelectImage() {
-    const photoSelected = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 4],
-      quality: 1,
-    });
-    if (photoSelected.canceled) {
-      return;
-    }
-    const photoUri = photoSelected.assets[0].uri;
+    try {
+      const photoSelected = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 4],
+        quality: 1,
+      });
+      if (photoSelected.canceled) {
+        return;
+      }
+      const photoUri = photoSelected.assets[0].uri;
 
-    if (photoUri) {
-      const photoInfo = (await FileSystem.getInfoAsync(photoUri)) as {
-        size: number;
-      };
+      if (photoUri) {
+        const photoInfo = (await FileSystem.getInfoAsync(photoUri)) as {
+          size: number;
+        };
 
-      setUserPhoto(photoSelected.assets[0].uri);
+        if (photoInfo.size && photoInfo.size / 1024 / 1024 > 5) {
+          return toast.show({
+            placement: "top",
+            render: ({ id }) => (
+              <ToastMessage
+                id={id}
+                title="Erro ao carregar a imagem"
+                description="A imagem não pode ser maior que 5MB"
+                action="error"
+                onClose={() => toast.close(id)}
+              />
+            ),
+          });
+        }
+
+        setUserPhoto(photoSelected.assets[0].uri);
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
 

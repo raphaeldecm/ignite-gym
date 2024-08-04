@@ -15,6 +15,7 @@ import { Button } from "@components/Button";
 import { useNavigation } from "@react-navigation/native";
 import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
 
+import { api } from "@services/api";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 
@@ -49,13 +50,27 @@ export function SignUp() {
 
   const navigator = useNavigation<AuthNavigatorRoutesProps>();
 
-  function handleSignUp({
-    name,
-    email,
-    password,
-    password_confirm,
-  }: FormDataProps) {
-    console.log({ name, email, password, password_confirm });
+  async function handleSignUp({ name, email, password }: FormDataProps) {
+    // Use the axios instance to send the data to the server
+    const response = await api.post("/users", { name, email, password });
+    console.log(response.data);
+
+    // Use the fetch API to send the data to the server
+    // fetch("http://localhost:3333/users", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify({ name, email, password }),
+    // })
+    //   .then((response) => response.json())
+    //   .then((data) => {
+    //     console.log(data);
+    //     navigator.navigate("signIn");
+    //   })
+    //   .catch((error) => {
+    //     console.error(error);
+    //   });
   }
 
   function handleNavigateToSignIn() {

@@ -4,6 +4,7 @@ import {
   Image,
   ScrollView,
   Text,
+  useToast,
   VStack,
 } from "@gluestack-ui/themed";
 
@@ -15,9 +16,12 @@ import { Button } from "@components/Button";
 import { useNavigation } from "@react-navigation/native";
 import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
 
+import axios from "axios";
 import { api } from "@services/api";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { ToastMessage } from "@components/ToastMessage";
+import { AppError } from "@utils/AppError";
 
 type FormDataProps = {
   name: string;
@@ -40,6 +44,7 @@ const signUpSchema = yup.object({
 });
 
 export function SignUp() {
+  const toast = useToast();
   const {
     control,
     handleSubmit,
@@ -52,8 +57,29 @@ export function SignUp() {
 
   async function handleSignUp({ name, email, password }: FormDataProps) {
     // Use the axios instance to send the data to the server
-    const response = await api.post("/users", { name, email, password });
-    console.log(response.data);
+    try {
+      const response = await api.post("/users", { name, email, password });
+      console.log(response.data);
+      navigator.navigate("signIn");
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+
+      const title = isAppError
+        ? error.message
+        : "Não foi possível criar a conta. Tente novamente mais tarde";
+      toast.show({
+        placement: "top",
+        render: ({ id }) => (
+          <ToastMessage
+            id={id}
+            title="Erro ao criar a conta"
+            description={title}
+            action="error"
+            onClose={() => toast.close(id)}
+          />
+        ),
+      });
+    }
 
     // Use the fetch API to send the data to the server
     // fetch("http://localhost:3333/users", {
